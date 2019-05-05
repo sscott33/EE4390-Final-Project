@@ -1,0 +1,278 @@
+;-------------------------------------------------------------------------------
+;                               UART RECEIVER
+; This program receives data (ASCII characters) through P1.1 labeled "RXD" on
+; the LaunchPad and displays the ASCII character on the LCD display. The LCD
+; program is the same that has been used before and the timing parameters are
+; established using the 16 MHz calibrated clock. The UART Receiver needs the
+; 1 MHz calibrated clock for establishing the timing parameters in the UART
+; module ... so the clock is changed back and forth as needed.
+;
+;     James Kretzschmar
+;     University of Wyoming
+;     5 January 2019
+
+;-------------------------------------------------------------------------------
+            .cdecls C,LIST,"msp430.h"       ; Include device header file
+            
+;-------------------------------------------------------------------------------
+            .def    RESET                   ; Export program entry-point to
+                                            ; make it known to linker.
+;-------------------------------------------------------------------------------
+            .text                           ; Assemble into program memory.
+            .retain                         ; Override ELF conditional linking
+                                            ; and retain current section.
+            .retainrefs                     ; And retain any sections that have
+                                            ; references to current section.
+
+;-------------------------------------------------------------------------------
+RESET       mov.w   #__STACK_END,SP         ; Initialize stackpointer
+StopWDT     mov.w   #WDTPW|WDTHOLD,&WDTCTL  ; Stop watchdog timer
+;-------------------------------------------------------------------------------
+; Main loop here
+;-------------------------------------------------------------------------------
+START_HERE:
+     mov.b   &CALBC1_16MHZ, &BCSCTL1 ; Fast CPU clock for setting up LCD
+     mov.b   &CALDCO_16MHZ, &DCOCTL  ; Fast CPU clock for setting up LCD
+
+     mov.b   #00000000b, &P1SEL      ; All pins selected as GPIO pins
+     mov.b   #00000000b, &P2SEL      ; All pins selected as GPIO pins
+     mov.b   #00110000b, &P1DIR      ; P1.4 and P1.5 are output pins
+     mov.b   #11111111b, &P2DIR      ; All are output pins
+     mov.b   #00000000b, &P1OUT      ; Nothing going out on Port 1
+     mov.b   #00000000b, &P2OUT      ; Nothing going out on Port 2
+
+;---------------- WAKE UP SEQUENCE OF LCD --------------------------------------
+;------ TOTAL DELAY = 50 MILLISECOND DELAY -------------------------------------
+     mov     #65535, R12             ; 12.5 Millisecond Delay
+DELAY_0:
+     dec     R12
+     jnz     DELAY_0
+     mov     #65535, R12             ; 12.5 Millisecond Delay
+DELAY_00:
+     dec     R12
+     jnz     DELAY_00
+     mov     #65535, R12             ; 12.5 Millisecond Delay
+DELAY_000:
+     dec     R12
+     jnz     DELAY_000
+     mov     #65535, R12             ; 12.5 Millisecond Delay
+DELAY_0000:
+     dec     R12
+     jnz     DELAY_0000
+;---- (COMMAND: FIRST WAKE UP CALL --- THEN DELAY) -----------------------------
+     mov.b   #00111000b, R13         ; 8-Bit, 2 Line
+     call    #SETUP                  ; SETUP = Routine to Load setup info
+     mov     #26215, R12             ; 5 Millisecond Delay
+DELAY_1:
+     dec     R12
+     jnz     DELAY_1
+;---- (COMMAND: SECOND WAKE UP CALL --- THEN DELAY) ----------------------------
+     mov.b   #00111000b, R13         ; 8-Bit, 2 Line
+     call    #SETUP                  ; SETUP = Routine to Load setup info
+     mov     #525, R12               ; 100 Microsecond Delay
+DELAY_2:
+     dec     R12
+     jnz     DELAY_2
+;---- (COMMAND: THIRD WAKE UP CALL) --- THEN DELAY) -----------------------------
+     mov.b   #00111000b, R13         ; 8-Bit, 2 Line
+     call    #SETUP                  ; SETUP = Routine to Load setup info
+     mov     #525, R12               ; 100 Microsecond Delay
+DELAY_3:
+     dec     R12
+     jnz     DELAY_3
+
+;--------------------------- END OF WAKE UP SEQUENCE ---------------------------
+;--------------------------------- SETUP SEQUENCE ------------------------------
+
+;---- (COMMAND: SELECTS 8-BIT, 2 LINE)(PROBABLY NOT NECESSARY AGAIN) -----------
+     mov.b   #00111000b, R13         ; 8-Bit, 2 Line
+     call    #SETUP                  ; SETUP = Routine to Load setup info
+     mov     #525, R12               ; 100 Microsecond Delay
+DELAY_4:
+     dec     R12
+     jnz     DELAY_4
+;---- (COMMAND: CLEAR DISPLAY) -------------------------------------------------
+     mov.b   #00000001b, R13         ; Clear Display
+     call    #SETUP                  ; SETUP = Routine to Load setup info
+     mov     #26215, R12             ; 5 Millisecond Delay
+DELAY_5:
+     dec     R12
+     jnz     DELAY_5
+;---- (COMMAND: SETS DDRAM ADDRESS)(See Datasheet for details) -----------------
+     mov.b   #10000001b, R13         ; DDRAM Address 01 selected
+     call    #SETUP                  ; SETUP = Routine to Load setup info
+     mov     #525, R12               ; 100 Microsecond Delay
+DELAY_6:
+     dec     R12
+     jnz     DELAY_6
+;---- (COMMAND: DISPLAY CONTROL) -----------------------------------------------
+     mov.b   #00001100b, R13         ; Display ON, Cursor OFF, Cursor Blinking OFF
+     call    #SETUP                  ; SETUP = Routine to Load setup info
+     mov     #525, R12               ; 100 Microsecond Delay
+DELAY_7:
+     dec     R12
+     jnz     DELAY_7
+;---- (COMMAND: DISPLAY SHIFT/CURSOR MOVE [RIGHT OR LEFT]) ---------------------
+     mov.b   #00000110b, R13         ; Display Shift OFF, Next character goes right
+     call    #SETUP                  ; SETUP = Routine to Load setup info
+     mov     #525, R12               ; 100 Microsecond Delay
+DELAY_8:
+     dec     R12
+     jnz     DELAY_8
+
+;---- (COMMAND: CURSOR HOME) ---------------------------------------------------
+     mov.b   #00000010b, R13        ; Cursor Home (DDRAM address 00)
+     call    #SETUP                 ; SETUP = Routine to Load setup info
+     mov     #525, R12              ; 100 Microsecond Delay
+DELAY_10:
+     dec     R12
+     jnz     DELAY_10
+
+;-------------------------------------------------------------------------------
+;---- LCD SETUP SEQUENCE ALL DONE -- GOTO THE CAPTURE AND DISPLAY ROUTINEs -----
+     jmp      RECEIVER
+;-------------------------------------------------------------------------------
+
+;-------------------------------------------------------------------------------
+;---- THIS IS THE "SETUP" ROUTINE THAT LOADS THE COMMANDS FOR THE LCD ----------
+;-------------------------------------------------------------------------------
+SETUP:
+     mov.b    #00000000b, &P1OUT     ; P1.4 is assigned to be in "COMMAND MODE"
+     mov      R13, R15               ; Loads contents of R13 into R15
+
+     bis.b    #00100000b, &P1OUT     ; P1.5 (LCD ENABLE) goes HIGH
+     mov      #525, R12              ; 100 Microsecond Delay
+DELAY_11:
+     dec      R12
+     jnz      DELAY_11
+
+     mov.b    R15, &P2OUT            ; Commands sent out on Port 2 (D0-D7 lines)
+
+     bic.b    #00100000b, &P1OUT     ; P1.5 (LCD ENABLE) goes LOW
+     mov      #525, R12              ; 100 Microsecond Delay
+DELAY_12:
+     dec      R12
+     jnz      DELAY_12
+
+     ret                             ; Returns to point in program right after
+                                     ; the "call" statement
+
+;--------------------------------------------------------------------------------
+;                        SET UP UART RECEIVER
+;--------------------------------------------------------------------------------
+RECEIVER:
+     mov.b    &CALBC1_1MHZ, &BCSCTL1 ; Calibrated 1 MHZ calibrated clock
+     mov.b    &CALDCO_1MHZ, &DCOCTL  ; Calibrated 1 MHZ calibrated clock
+;----------------------------------------------------------------------------------
+;                        Register UCA0CTL0 is all "0"s
+;   (BIT 7 = 0 Parity disabled)(BIT 6 = 0 Do not need to select a parity)
+;   (BIT 5 = 0 LSB sent out first)(BIT 4 = 0   8 Bit data mode)
+;   (BIT 3 = 0 One stop Bit)(BIT 1&2 = 0 UART Mode)(Bit 0 = 0 Asynchronous mode)
+;----------------------------------------------------------------------------------
+
+     mov.b    #00000110b, &P1SEL     ; UART RX and TX pins
+     mov.b    #00000110b, &P1SEL2    ; UART RX and TX pins
+
+     bis.b    #UCSWRST, &0x061    ; Reset UART ... ON
+                                     ; Reset has to be ON to configure parameters
+     mov.b    #UCSSEL_2, &0x061   ; SMCLK selected as the clock source
+     mov.b    #104, &UCA0BR0         ; 9600 Baud selected (See Table 15-4, p.424)
+     mov.b    #0,   &0x063         ; 9600 Baud rate selected
+     mov.b    #UCBRS0, &0x064     ; (See Table 15-2 p. 420) and p. 431
+
+     bic.b    #UCSWRST, &0x061    ; Reset UART ... OFF
+                                     ; Reset has to be OFF for UART to operate
+;----------------------------------------------------------------------------------
+;     IFG2 is the Interrupt Flag Register 2 and controls the flow of data
+;     within the UART module for both the Transmitter and the Receiver. On the
+;     Receiver side if the UCA0RXIFG Bit is not set (ie. = 0) then the receive
+;     buffer has not received data yet from the transmitter. If UCA0RXIFG is set
+;     (ie. = 1) then the receive buffer has received a complete 8 Bits of data and
+;     is ready to move that data through the UART module to be displayed on the
+;     LCD display.
+;----------------------------------------------------------------------------------
+CHECK_STATUS_OF_RECEIVE_BUFFER:
+     bit.b    #UCA0RXIFG, &IFG2              ; Test the UCA0RXIFG flag
+     jz       CHECK_STATUS_OF_RECEIVE_BUFFER ; If "0" keep checking
+;----------------------------------------------------------------------------------
+;             IF "1" THE PROGRAM CONTINUES ON
+;----------------------------------------------------------------------------------
+
+     mov.b    &UCA0RXBUF, R7         ; Contents of Receive buffer moved into R7
+
+     mov      R7, R4                 ; R7 moved into R4
+
+     bit.b	  #17, R7				 ; do cursor home when ASCII char 17 is received
+     jne	  NO_CURSOR_HOME
+
+     mov.b   #00000010b, R13        ; Cursor Home (DDRAM address 00)
+     call    #SETUP                 ; SETUP = Routine to Load setup info
+     mov     #525, R12              ; 100 Microsecond Delay
+DELAY_10:
+     dec     R12
+     jnz     DELAY_10
+
+
+NO_CURSOR_HOME:						 ; normal behavior on receipt of data
+     call     #ENTER_ASCII           ; Send to LCD display
+
+     jmp      CHECK_STATUS_OF_RECEIVE_BUFFER  ; Go check for another 8 Bits of data
+;--------------------------------------------------------------------------------
+;---- ROUTINE THAT SENDS ASCII NUMBER TO THE LCD DISPLAY ------------------------
+;--------------------------------------------------------------------------------
+ENTER_ASCII:
+
+     mov.b   &CALBC1_16MHZ, &BCSCTL1 ; Fast CPU clock for setting up LCD
+     mov.b   &CALDCO_16MHZ, &DCOCTL  ; Fast CPU clock for setting up LCD
+
+     mov.b    #00010000b, &P1OUT    ; P1.4 is assigned to be in "DATA MODE"
+     mov      R4, R13
+     mov      R13, R15
+
+     bis.b    #00100000b, &P1OUT    ; P1.5 (LCD ENABLE) goes HIGH
+     mov      #525, R12             ; 100 Microsecond Delay
+DELAY_13:
+     dec      R12
+     jnz      DELAY_13
+
+     mov.b    R15, &P2OUT           ; Data goes out on D0-D7 lines
+
+     bic.b    #00100000b, &P1OUT    ; P1.5 (LCD ENABLE) goes LOW
+     mov      #525, R12             ; 100 Microsecond Delay
+DELAY_14:
+     dec      R12
+     jnz      DELAY_14
+
+     mov.b    &CALBC1_1MHZ, &BCSCTL1 ; Clock reset for UART
+     mov.b    &CALDCO_1MHZ, &DCOCTL  ; Clock reset for UART
+
+     ret                            ; Returns program to after "call"
+;-------------------------------------------------------------------------------
+; Stack Pointer definition
+;-------------------------------------------------------------------------------
+            .global __STACK_END
+            .sect   .stack
+;-------------------------------------------------------------------------------
+; Interrupt Vectors -- add in ".short" for the Interupt Service Routine
+;-------------------------------------------------------------------------------
+;           .sect   ".int00"        ; Slot 0
+;           .sect   ".int01"        ; Slot 1
+;           .sect   ".int02"        ; Slot 2    Port1_Vector
+;           .sect   ".int03"        ; Slot 3    Port2_Vector
+;           .sect   ".int04"        ; Slot 4
+;           .sect   ".int05"        ; Slot 5    ADC10_Vector
+;           .sect   ".int06"        ; Slot 6    USCIAB0TX_Vector
+           ;.sect   ".int07"         ; Slot 7    USCIAB0RX_Vector
+           ;.short   READ_BUFFER
+;           .sect   ".int08"        ; Slot 8    TIMER0_A1_Vector
+;           .sect   ".int09"        ; Slot 9    TIMER_0 Vector
+;           .sect   ".int10"        ; Slot 10   WDT_Vector
+;           .sect   ".int11"        ; Slot 11   COMPARATORA_Vector
+;           .sect   ".int12"        ; Slot 12   TIMER1_A1_Vector
+;           .sect   ".int13"        ; Slot 13   TIMER1_A0_Vector
+;           .sect   ".int14"        ; Slot 14   NMI_Vector
+            .sect   ".reset"        ; MSP430 RESET Vector
+            .short   RESET
+
+
+            
