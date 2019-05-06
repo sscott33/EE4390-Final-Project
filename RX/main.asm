@@ -13,7 +13,7 @@
 
 ;-------------------------------------------------------------------------------
             .cdecls C,LIST,"msp430.h"       ; Include device header file
-            
+
 ;-------------------------------------------------------------------------------
             .def    RESET                   ; Export program entry-point to
                                             ; make it known to linker.
@@ -196,6 +196,7 @@ CHECK_STATUS_OF_RECEIVE_BUFFER:
 
      mov      R7, R4                 ; R7 moved into R4
 
+;;; does this work? (cursor home)
      bit.b	  #17, R7				 ; do cursor home when ASCII char 17 is received
      jne	  NO_CURSOR_HOME
 
@@ -267,6 +268,3 @@ DELAY_14:
 ;           .sect   ".int14"        ; Slot 14   NMI_Vector
             .sect   ".reset"        ; MSP430 RESET Vector
             .short   RESET
-
-
-            

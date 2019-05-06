@@ -112,10 +112,8 @@ void __attribute__((interrupt(PORT1_VECTOR))) button(void) {
            P1IFG &= ~8;
            // send at least 10 us pulse
            P1OUT |= 16;
-//            asm("    nop\n \t nop\n \t nop\n \t nop\n \t nop");
            asm("    nop\n \t nop\n \t nop\n \t nop\n \t nop\n \t nop\n \t nop\n \t nop\n \t nop\n \t nop");
            P1OUT &= ~16;
-//            while(P1IN & 8 == 8){} // wait for button release (may or may not need to deal with switch bounce)
            break;
        default:
            P1IFG &= ~IV;
@@ -249,16 +247,14 @@ int main(void) {
     // setup button P1.3 for interrupt on falling edge
     P1IE |= BIT3;
     P1IES &= ~BIT3;
+    // P1DIR &= ~BIT3; // Make P1.3 an input to provide pull-up on SW2.
+    // P1REN |=  BIT3; // This is a trick to use the LaunchPad SW2 here.
+    // P1OUT |=  BIT3; // Should now have internal pull-up for switch.
 
     // configure P1.4 for triggering to sensor
     P1DIR |= BIT4;
     P1SEL &= ~BIT4;
     P1SEL2 &= ~BIT4;
-
-
-    // in the ISR for button press (P1.3 falling edge),
-//    newValueReady = true;
-
 
     while(1) {
         if(newValueReady) {
