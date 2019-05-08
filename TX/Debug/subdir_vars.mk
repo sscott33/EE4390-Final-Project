@@ -8,22 +8,22 @@ SHELL = cmd.exe
 CMD_SRCS += \
 ../lnk_msp430g2553.cmd 
 
-C_SRCS += \
-../main.c 
-
-C_DEPS += \
-./main.d 
+ASM_SRCS += \
+../main.asm 
 
 OBJS += \
 ./main.obj 
 
+ASM_DEPS += \
+./main.d 
+
 OBJS__QUOTED += \
 "main.obj" 
 
-C_DEPS__QUOTED += \
+ASM_DEPS__QUOTED += \
 "main.d" 
 
-C_SRCS__QUOTED += \
-"../main.c" 
+ASM_SRCS__QUOTED += \
+"../main.asm" 
 
 

@@ -185,8 +185,13 @@ RECEIVER:
 ;     is ready to move that data through the UART module to be displayed on the
 ;     LCD display.
 ;----------------------------------------------------------------------------------
+
 CHECK_STATUS_OF_RECEIVE_BUFFER:
      bit.b    #UCA0RXIFG, &IFG2              ; Test the UCA0RXIFG flag
+     mov.b	  #104, R4
+	 call	  #ENTER_ASCII
+	 call	  #ENTER_ASCII
+	 call	  #ENTER_ASCII
      jz       CHECK_STATUS_OF_RECEIVE_BUFFER ; If "0" keep checking
 ;----------------------------------------------------------------------------------
 ;             IF "1" THE PROGRAM CONTINUES ON
@@ -196,19 +201,23 @@ CHECK_STATUS_OF_RECEIVE_BUFFER:
 
      mov      R7, R4                 ; R7 moved into R4
 
-;;; does this work? (cursor home)
-     bit.b	  #17, R7				 ; do cursor home when ASCII char 17 is received
-     jne	  NO_CURSOR_HOME
+;;; Cursor Home
 
-     mov.b   #00000010b, R13        ; Cursor Home (DDRAM address 00)
-     call    #SETUP                 ; SETUP = Routine to Load setup info
-     mov     #525, R12              ; 100 Microsecond Delay
-DELAY_10:
-     dec     R12
-     jnz     DELAY_10
+;	 cmp.b 	 #17, R4
+;     jne	 NO_CURSOR_HOME
 
 
-NO_CURSOR_HOME:						 ; normal behavior on receipt of data
+;     mov.b   #00000010b, R13        ; Cursor Home (DDRAM address 00)
+;     call    #SETUP                 ; SETUP = Routine to Load setup info
+;     mov     #525, R12              ; 100 Microsecond Delay
+;DELAY_10:
+;     dec     R12
+;     jnz     DELAY_10
+;
+;	 jmp      CHECK_STATUS_OF_RECEIVE_BUFFER
+;;;
+
+;NO_CURSOR_HOME:						 ; normal behavior on receipt of data
      call     #ENTER_ASCII           ; Send to LCD display
 
      jmp      CHECK_STATUS_OF_RECEIVE_BUFFER  ; Go check for another 8 Bits of data
