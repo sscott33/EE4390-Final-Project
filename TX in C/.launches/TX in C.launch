@@ -1,10 +1,14 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <launchConfiguration type="com.ti.ccstudio.debug.launchType.device.debugging">
 <stringAttribute key="com.ti.ccstudio.debug.debugModel.ATTR_DEBUGGER_PROPERTIES.E:\MicroP\Final Project\TX in C\targetConfigs\MSP430G2553.ccxml.TI MSP430 USB1/MSP430" value="&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot; standalone=&quot;no&quot; ?&gt;&#10;&lt;PropertyValues&gt;&#10;&#10;  &lt;property id=&quot;ConnectOnStartup&quot;&gt;&#10;    &lt;curValue&gt;1&lt;/curValue&gt;&#10;  &lt;/property&gt;&#10;&#10;  &lt;property id=&quot;EnableInstalledBreakpoint&quot;&gt;&#10;    &lt;curValue&gt;1&lt;/curValue&gt;&#10;  &lt;/property&gt;&#10;&#10;&lt;/PropertyValues&gt;&#10;"/>
+<stringAttribute key="com.ti.ccstudio.debug.debugModel.ATTR_DEBUGGER_PROPERTIES.F:\MicroP\Final Project\TX in C\targetConfigs\MSP430G2553.ccxml.TI MSP430 USB1/MSP430" value="&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot; standalone=&quot;no&quot; ?&gt;&#10;&lt;PropertyValues&gt;&#10;&#10;  &lt;property id=&quot;ConnectOnStartup&quot;&gt;&#10;    &lt;curValue&gt;1&lt;/curValue&gt;&#10;  &lt;/property&gt;&#10;&#10;  &lt;property id=&quot;EnableInstalledBreakpoint&quot;&gt;&#10;    &lt;curValue&gt;1&lt;/curValue&gt;&#10;  &lt;/property&gt;&#10;&#10;&lt;/PropertyValues&gt;&#10;"/>
 <stringAttribute key="com.ti.ccstudio.debug.debugModel.ATTR_PROGRAM.E:\MicroP\Final Project\TX in C\targetConfigs\MSP430G2553.ccxml.TI MSP430 USB1/MSP430" value="${build_artifact:TX in C}"/>
+<stringAttribute key="com.ti.ccstudio.debug.debugModel.ATTR_PROGRAM.F:\MicroP\Final Project\TX in C\targetConfigs\MSP430G2553.ccxml.TI MSP430 USB1/MSP430" value="${build_artifact:TX in C}"/>
 <stringAttribute key="com.ti.ccstudio.debug.debugModel.ATTR_PROJECT.E:\MicroP\Final Project\TX in C\targetConfigs\MSP430G2553.ccxml.TI MSP430 USB1/MSP430" value="TX in C"/>
+<stringAttribute key="com.ti.ccstudio.debug.debugModel.ATTR_PROJECT.F:\MicroP\Final Project\TX in C\targetConfigs\MSP430G2553.ccxml.TI MSP430 USB1/MSP430" value="TX in C"/>
 <stringAttribute key="com.ti.ccstudio.debug.debugModel.ATTR_TARGET_CONFIG" value="${target_config_active_default:TX in C}"/>
 <stringAttribute key="com.ti.ccstudio.debug.debugModel.MRU_PROGRAM.E:\MicroP\Final Project\TX in C\targetConfigs\MSP430G2553.ccxml.TI MSP430 USB1/MSP430" value="E:/MicroP\Final Project\TX in C\Debug\TX in C.out"/>
+<stringAttribute key="com.ti.ccstudio.debug.debugModel.MRU_PROGRAM.F:\MicroP\Final Project\TX in C\targetConfigs\MSP430G2553.ccxml.TI MSP430 USB1/MSP430" value="F:/MicroP\Final Project\TX in C\Debug\TX in C.out"/>
 <listAttribute key="org.eclipse.debug.core.MAPPED_RESOURCE_PATHS">
 <listEntry value="/TX in C"/>
 </listAttribute>

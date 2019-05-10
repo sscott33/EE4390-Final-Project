@@ -36,7 +36,7 @@ START_HERE:
 
      mov.b   #00000000b, &P1SEL      ; All pins selected as GPIO pins
      mov.b   #00000000b, &P2SEL      ; All pins selected as GPIO pins
-     mov.b   #00110000b, &P1DIR      ; P1.4 and P1.5 are output pins
+     mov.b   #00110001b, &P1DIR      ; P1.4 and P1.5 are output pins
      mov.b   #11111111b, &P2DIR      ; All are output pins
      mov.b   #00000000b, &P1OUT      ; Nothing going out on Port 1
      mov.b   #00000000b, &P2OUT      ; Nothing going out on Port 2
@@ -185,39 +185,37 @@ RECEIVER:
 ;     is ready to move that data through the UART module to be displayed on the
 ;     LCD display.
 ;----------------------------------------------------------------------------------
+     ;mov.b	  #104, R4
+;     mov.b	 #74, R4
+;	 call	  #ENTER_ASCII
+;	 call	  #ENTER_ASCII
+;	 call	  #ENTER_ASCII
 
 CHECK_STATUS_OF_RECEIVE_BUFFER:
      bit.b    #UCA0RXIFG, &IFG2              ; Test the UCA0RXIFG flag
-     mov.b	  #104, R4
-	 call	  #ENTER_ASCII
-	 call	  #ENTER_ASCII
-	 call	  #ENTER_ASCII
      jz       CHECK_STATUS_OF_RECEIVE_BUFFER ; If "0" keep checking
 ;----------------------------------------------------------------------------------
 ;             IF "1" THE PROGRAM CONTINUES ON
 ;----------------------------------------------------------------------------------
 
-     mov.b    &UCA0RXBUF, R7         ; Contents of Receive buffer moved into R7
-
-     mov      R7, R4                 ; R7 moved into R4
+     mov.b    &UCA0RXBUF, R4         ; Contents of Receive buffer moved into R7
 
 ;;; Cursor Home
 
-;	 cmp.b 	 #17, R4
-;     jne	 NO_CURSOR_HOME
+	 cmp.b 	 #17, R4
+     jne	 NO_CURSOR_HOME
+
+     mov.b   #00000010b, R13        ; Cursor Home (DDRAM address 00)
+     call    #SETUP                 ; SETUP = Routine to Load setup info
+     mov     #525, R12              ; 100 Microsecond Delay
+DELAY_10:
+     dec     R12
+     jnz     DELAY_10
 
 
-;     mov.b   #00000010b, R13        ; Cursor Home (DDRAM address 00)
-;     call    #SETUP                 ; SETUP = Routine to Load setup info
-;     mov     #525, R12              ; 100 Microsecond Delay
-;DELAY_10:
-;     dec     R12
-;     jnz     DELAY_10
-;
-;	 jmp      CHECK_STATUS_OF_RECEIVE_BUFFER
 ;;;
 
-;NO_CURSOR_HOME:						 ; normal behavior on receipt of data
+NO_CURSOR_HOME:						 ; normal behavior on receipt of data
      call     #ENTER_ASCII           ; Send to LCD display
 
      jmp      CHECK_STATUS_OF_RECEIVE_BUFFER  ; Go check for another 8 Bits of data
